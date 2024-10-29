@@ -1,4 +1,4 @@
-﻿namespace Core.Abstractions
+﻿namespace Core.Contracts
 {
     public interface IServiceCrud<T> : IService<T>
     {

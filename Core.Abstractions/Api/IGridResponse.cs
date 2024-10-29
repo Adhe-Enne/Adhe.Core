@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Core.Abstractions
+namespace Core.Contracts
 {
     public interface IGridResponse<T>
     {

@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace Core.Abstractions
+namespace Core.Contracts
 {
     public interface IRepository<T> where T : class
     {

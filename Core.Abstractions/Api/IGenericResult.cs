@@ -1,5 +1,5 @@
 ﻿
-namespace Core.Abstractions
+namespace Core.Contracts
 {
     public interface IGenericResult
     {

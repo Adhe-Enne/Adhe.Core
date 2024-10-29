@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Core.Abstractions
+namespace Core.Contracts
 {
     public interface IAuditableCreate
     {

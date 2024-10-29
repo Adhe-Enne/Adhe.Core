@@ -1,4 +1,4 @@
-﻿namespace Core.Abstractions.Dto
+﻿namespace Core.Contracts.Dto
 {
     public class OptionDto
     {

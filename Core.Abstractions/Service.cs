@@ -1,8 +1,8 @@
 ﻿using System.Linq.Expressions;
 
-namespace Core.Abstractions
+namespace Core.Contracts
 {
-    public class Service<T> : IService<T> where T : class, Core.Abstractions.IEntity
+    public class Service<T> : IService<T> where T : class, Core.Contracts.IEntity
     {
         private readonly IRepository<T> _repository;
 
