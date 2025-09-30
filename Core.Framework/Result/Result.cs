@@ -1,4 +1,4 @@
-﻿namespace Core.Framework
+﻿namespace Core.Framework.Result
 {
     public class Result<R, E> : Result<E>
     {
