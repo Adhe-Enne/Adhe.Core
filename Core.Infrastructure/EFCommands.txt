@@ -1,0 +1,17 @@
+Entity Framework Core Commands
+
+//Generar Modelo de Migracion
+add-migration Initial_Migration
+dotnet ef migrations add InitialCreate -p {ProyectoDbContext} -s {Proyecto donde se estan inyectando}
+
+//Aplicar migracion a la base de datos
+dotnet ef database update -p Kanban.DatabaseContext -s technical-tests-backend-ssr
+
+//Generar Script Sql a partir de migracion
+script-migration
+
+//Crear-Actualizar base de datos
+Update-Database -verbose
+
+//Eliminar ultima migracion
+ef migrations remove
