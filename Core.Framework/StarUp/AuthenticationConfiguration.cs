@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-namespace Core.Framework.StartUp
+namespace Core.Framework.StarUp
 {
     public static class AuthenticationConfiguration
     {

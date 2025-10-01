@@ -1,38 +1,22 @@
-﻿using Core.Contracts.Exceptions;
-using Core.Framework.ApiContracts;
+﻿using AutoMapper;
+using Core.Contracts.Exceptions;
+using Core.Framework.Contracts.Api;
+using Core.Framework.Contracts.Api.Interfaces;
+using Core.Framework.Messages;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace Core.Framework.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BaseController : ControllerBase
+    public class BaseController(ILogger log, IMapper mapper) : ControllerBase
     {
-        protected ILogger _log;
-
-        public BaseController(ILogger log)
-        {
-            _log = log;
-        }
-
-        //protected IApiResult HandleException(ResultException ex, string message = null)
-        //{
-        //    message = $"{message ?? "Error"} : {ex.StatusCode} . Exception: {ex.Message}";
-        //    _log.LogError(message, ex);
-
-        //    return new ApiResult().SetError(message, ex.StatusCode);
-        //}
-
-        protected IApiResult HandleException(Exception ex, HttpStatusCode statusCode, string message = null)
-        {
-            message = $"{message ?? "Error"} : {statusCode} . Exception: {ex.Message}";
-            _log.LogError(message, ex);
-
-            return new ApiResult().SetError(message, statusCode);
-        }
+        protected ILogger _log = log;
+        protected IMapper _mapper = mapper;
 
         protected IApiResult HandleSuccess(string message = null, HttpStatusCode statusCode = HttpStatusCode.OK)
         {
@@ -44,39 +28,60 @@ namespace Core.Framework.Controllers
 
         protected IApiResult HandleSuccess(HttpStatusCode statusCode, string template, params object[] args)
         {
-            var message = MessageFormatter.Format(template, args);
+            var message = FormatMessage(template, args);
 
             return HandleSuccess(message, HttpStatusCode.OK);
         }
 
         protected IApiResult HandleSuccess(string template, params object[] args)
         {
-            var message = MessageFormatter.Format(template, args);
+            var message = FormatMessage(template, args);
 
             return HandleSuccess(message, HttpStatusCode.OK);
         }
 
-        protected ObjectResult ResponseApi(IApiResult apiResult)
+        protected ActionResult<IApiResult> ResponseApi(IApiResult apiResult)
         {
             return StatusCode((int) apiResult.StatusCode, apiResult);
         }
 
-        protected ObjectResult ResponseApi<T>(IApiResult<T> apiResult)
+        protected ActionResult<IApiResult<T>> ResponseApi<T>(IApiResult<T> apiResult)
+        {
+            return StatusCode((int)apiResult.StatusCode, apiResult);
+        }
+
+        protected ActionResult<ILoginResult<T>> ResponseApi<T>(ILoginResult<T> apiResult)
         {
             return StatusCode((int) apiResult.StatusCode, apiResult);
         }
 
-        public static class MessageFormatter
+        public static string FormatMessage(string template, params object[] args)
         {
-            public static string Format(string template, params object[] args)
+            return string.Format(template, args);
+        }
+
+        protected IApiResult HandleException(Exception ex, HttpStatusCode statusCode, string message = null)
+        {
+            message = $"{message ?? "Error"} : {statusCode} . Exception: {ex.Message}";
+            _log.LogError(message, ex);
+
+            return new ApiResult().SetError(message, statusCode);
+        }
+
+        protected IApiResult HandleServiceException(Exception ex)
+        {
+            string message;
+
+            if (ex is not IBusinessException)
             {
-                return string.Format(template, args);
+                message = $"{Domain.ERROR} : {HttpStatusCode.InternalServerError} . Exception: {ex.Message}";
+                _log.LogError(message, ex);
+                return new ApiResult().SetError(message, HttpStatusCode.InternalServerError);
             }
-        }
 
-        protected IApiResult HandleServiceException(IBusinessException ex)
-        {
-            var httpCode = ex.ErrorCode switch
+            IBusinessException bex = (IBusinessException) ex;
+
+            var httpCode = ((IBusinessException)ex).ErrorCode switch
             {
                 EnumBusinessErrorCode.None => HttpStatusCode.OK,
                 EnumBusinessErrorCode.UserAlreadyExists => HttpStatusCode.Conflict,
@@ -93,7 +98,78 @@ namespace Core.Framework.Controllers
                 EnumBusinessErrorCode.InternalError => HttpStatusCode.InternalServerError,
                 _ => HttpStatusCode.BadRequest
             };
-            return new ApiResult().SetError($"{ex.Message} ({ex.Reason})", httpCode);
+
+            var result = new ApiResult().SetError($"{ex.Message} ({((IBusinessException)ex).Reason})", httpCode);
+            message = $"{result.Message ?? "Error"} : {result.StatusCode} . Exception: {ex.Message}";
+            _log.LogError(message, ex);
+
+            return result;
         }
+
+        #region Wrappers
+        protected async Task<ActionResult<IApiResult<T>>> Execute<T>(Func<Task<IApiResult<T>>> action)
+        {
+            var result = new ApiResult<T>();
+
+            try
+            {
+                result = (ApiResult<T>) await action();
+            }
+            catch (Exception ex) when (ex is IBusinessException bex)
+            {
+                result.Set(HandleServiceException(ex));
+            }
+            catch (Exception ex)
+            {
+                result.Set(HandleException(ex, HttpStatusCode.InternalServerError, Domain.ERROR));
+            }
+
+            return ResponseApi(result);
+        }
+
+        protected async Task<ActionResult<IApiResult>> HandleRequestAsync(Func<Task<IApiResult>> action)
+        {
+            try
+            {
+                var result = await action();
+                return ResponseApi(result);
+            }
+            catch (Exception ex) when (ex is IBusinessException bex)
+            {
+                var errorResult = HandleServiceException(ex);
+                return ResponseApi(errorResult);
+            }
+            catch (Exception ex)
+            {
+                var errorResult = new ApiResult().SetError(ex.Message, HttpStatusCode.InternalServerError);
+                return ResponseApi(errorResult);
+            }
+        }
+
+        protected async Task<ActionResult<IApiResult<T>>> HandleRequestAsync<T>(Func<Task<IApiResult<T>>> action)
+        {
+            try
+            {
+                var result = await action();
+                return ResponseApi(result);
+            }
+            catch (Exception ex) when (ex is IBusinessException bex)
+            {
+                var errorResult = HandleServiceException(ex);
+                var typedErrorResult = new ApiResult<T>();
+                typedErrorResult.Set(errorResult);
+
+                return ResponseApi(typedErrorResult);
+            }
+            catch (Exception ex)
+            {
+                var errorResult = new ApiResult<T>().SetError(ex.Message, HttpStatusCode.InternalServerError);
+                var typedErrorResult = new ApiResult<T>();
+                typedErrorResult.Set(errorResult);
+
+                return ResponseApi(typedErrorResult);
+            }
+        }
+        #endregion
     }
 }
