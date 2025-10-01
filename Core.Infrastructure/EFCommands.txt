@@ -6,6 +6,7 @@ dotnet ef migrations add InitialCreate -p {ProyectoDbContext} -s {Proyecto donde
 
 //Aplicar migracion a la base de datos
 dotnet ef database update -p Kanban.DatabaseContext -s technical-tests-backend-ssr
+update-database
 
 //Generar Script Sql a partir de migracion
 script-migration

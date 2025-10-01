@@ -1,18 +1,17 @@
-﻿using Core.Contracts.Model;
+﻿using Core.Contracts;
+using Core.Contracts.Model;
 using Core.Contracts.Model.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace Core.Infrastructure
 {
-    public class GenericRepositoryContextAsync<T, TContext>// : IRepositoryAsync<T>, IDisposable
-        where T : BaseEntity
-        where TContext : DbContext
+    public class RepositoryAsync<T> : IRepositoryAsync<T> where T : BaseEntity
     {
-        protected readonly TContext _dbContext;
+        protected readonly DbContext _dbContext;
         protected readonly DbSet<T> _dbSet;
 
-        public GenericRepositoryContextAsync(TContext dbContext)
+        public RepositoryAsync(DbContext dbContext)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
             _dbSet = _dbContext.Set<T>();
@@ -227,4 +226,5 @@ namespace Core.Infrastructure
 
         #endregion
     }
+
 }

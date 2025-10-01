@@ -6,10 +6,12 @@
         Internal,
         UserEmailExists,
         UserNotFound,
+        UserLockedOut,
         InvalidPassword,
         Unauthorized,
         UserAlreadyExists,
         InvalidRole,
+        InvalidToken,
         UnrecognizedRole,
         EntityNotFound,
         BoardNotFound,
@@ -21,5 +23,6 @@
         InternalError,
         BoardHasActiveTasks // <-- Agregado para la validación de tareas activas en el tablero
         // Agrega aquí más códigos según tus necesidades
+
     }
 }
