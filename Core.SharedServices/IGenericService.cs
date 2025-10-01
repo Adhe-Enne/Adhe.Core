@@ -7,7 +7,7 @@ namespace Core.SharedServices
     {
         #region Métodos de consulta
         IQueryable<T> AsQueryable();
-        Task<IEnumerable<T>> GetAllAsync();
+        Task<IEnumerable<T>> GetAllAsync(params Expression<Func<T, object>>[] includeProperties);
         Task<IEnumerable<T>> FilterAsync(Expression<Func<T, bool>> where, params Expression<Func<T, object>>[] includeProperties);
         Task<T?> FindAsync(Expression<Func<T, bool>> where, params Expression<Func<T, object>>[] includeProperties);
         Task<T?> GetByIdAsync(Guid id);

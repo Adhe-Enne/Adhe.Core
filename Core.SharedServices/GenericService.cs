@@ -1,5 +1,4 @@
-﻿
-using Core.Contracts;
+﻿using Core.Contracts;
 using Core.Contracts.Model;
 using System.Linq.Expressions;
 
@@ -17,8 +16,8 @@ namespace Core.SharedServices
         #region Query Methods
         public virtual IQueryable<T> AsQueryable() => _repository.AsQueryable();
 
-        public virtual async Task<IEnumerable<T>> GetAllAsync()
-            => await _repository.GetAllAsync(x => x.IsActive);
+        public virtual async Task<IEnumerable<T>> GetAllAsync(params Expression<Func<T, object>>[] includeProperties)
+            => await _repository.GetAllWithIncludesAsync(includeProperties);
 
         public virtual async Task<IEnumerable<T>> FilterAsync(Expression<Func<T, bool>> where, params Expression<Func<T, object>>[] includeProperties)
             => await _repository.FilterAsync(where, includeProperties);
@@ -88,8 +87,8 @@ namespace Core.SharedServices
 
         public async Task<TField>? SelectAsync<TField>(Expression<Func<T, bool>> where, Expression<Func<T, TField>> fieldSelector, params Expression<Func<T, object>>[] includeProperties)
         {
-            var ret =  await FilterAsync(where, includeProperties);
-            return  ret.AsQueryable()
+            var ret = await FilterAsync(where, includeProperties);
+            return ret.AsQueryable()
             .Select(fieldSelector)
             .FirstOrDefault()!;
         }
