@@ -1,7 +1,6 @@
 using Core.Contracts.Model;
 using Core.SharedServices.Exceptions;
 using Core.SharedServices.Security.Interfaces;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Core.SharedServices.Authentication
 {
@@ -22,10 +21,11 @@ namespace Core.SharedServices.Authentication
         {
             var user = await _userService.FindAsync(u => u.Email == email && u.IsActive);
 
-            if (user == null) 
+            if (user == null)
                 throw new BusinessException("El Email no pertenece a ningun usuario",
                     Contracts.Exceptions.EnumBusinessErrorCode.UserNotFound,
                     "Invalid credentials");
+
 
             // Verifica si el usuario está bloqueado
             if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
@@ -34,7 +34,7 @@ namespace Core.SharedServices.Authentication
                              "User is locked out");
 
             await ValidateAttempts(user, password);
-         
+
             user.FailedLoginAttempts = 0;
             user.LockoutEnd = null;
             await _userService.UpdateAsync(user);
@@ -44,7 +44,7 @@ namespace Core.SharedServices.Authentication
 
         public async Task<TUser> RegisterAsync(TUser user, string password)
         {
-            if (await _userService.ExistsAsync(x=> x.IsActive && (x.Email == user.Email || x.DNI == user.DNI)))
+            if (await _userService.ExistsAsync(x => x.IsActive && (x.Email == user.Email || x.DNI == user.DNI)))
             {
                 throw new BusinessException(password, Contracts.Exceptions.EnumBusinessErrorCode.UserAlreadyExists, "User already exists");
             }
@@ -87,7 +87,7 @@ namespace Core.SharedServices.Authentication
 
         public async Task ChangePasswordAsync(Guid idUser, string currentPassword, string newPassword)
         {
-            TUser? user = await _userService.GetByIdAsync(idUser);
+            TUser? user = await _userService.GetByIdAsync(id: idUser);
 
             if (user == null || !user.IsActive)
                 throw new BusinessException("Usuario no encontrado", Contracts.Exceptions.EnumBusinessErrorCode.UserNotFound, "User not found");
